@@ -44,5 +44,3 @@ class PWidget(object):
 
     def add_window(self,win):
         self.mngr.add_window(win)
-        
-        

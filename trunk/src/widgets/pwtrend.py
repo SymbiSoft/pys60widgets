@@ -1,5 +1,6 @@
 import e32
 from pwidget import *
+from random import randint
 
 __all__ = [ "PWTrend" ]
 
