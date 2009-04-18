@@ -1,12 +1,20 @@
-from pwidgets import *
+from pwidget import *
+from random import randint
 
-class PWDemo(PWidgets):
+class PWDemo(PWidget):
 
-    def __init__(self):    
+    def __init__(self,mngr):    
         self.name = u"Demo"
+        PWidget.__init__(self,mngr,self.name)
     
     def get_name(self):
         return self.name
 
     def run(self):
-        pass    
+        self.add_window(self)  
+
+    def get_color(self):
+        return (randint(0,255),randint(0,255),randint(0,255))
+    
+    def update_canvas(self): 
+        self.canvas.clear(self.get_color())

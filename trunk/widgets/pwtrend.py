@@ -1,20 +1,21 @@
-from pwidgets import *
+import e32
+from pwidget import *
 
 __all__ = [ "PWTrend" ]
 
-class PWTrend(PWidgets):
+class PWTrend(PWidget):
     
     BLACK = (0,0,0)
     DARK_GREEN = (0,102,0)
     BLUE = (51,204,255)
     YELLOW = (255,255,102)
 
-    def __init__(self,**attrs):
+    def __init__(self,pw_mngr,**attrs):
         self.name = u"Trend"
         self.check_default_values(attrs)
-        self.menu = [(u"Start",self.start),
-                     (u"Stop",self.stop)]
-        PWidget.__init__(self,attrs['position'],self.menu)
+        menu = [(u"Start",self.start),
+                (u"Stop",self.stop)]
+        PWidget.__init__(self,pw_mngr,self.name,menu)
         self.samples = []
         self.sampling = False
         self.timer = e32.Ao_timer()
@@ -25,7 +26,7 @@ class PWTrend(PWidgets):
         return self.name
 
     def run(self):
-        pass
+        self.add_window(self)
     
     def start(self):
         if not self.sampling:
@@ -51,8 +52,7 @@ class PWTrend(PWidgets):
         """
         self.attrs = {}
 
-        self.def_attrs = { 'position':(),
-                           'min':0,
+        self.def_attrs = { 'min':0,
                            'max':100,
                            'sampling_time':2,
                            'sampler':self.default_sampler }
@@ -62,11 +62,6 @@ class PWTrend(PWidgets):
                 self.attrs[k] = attrs[k]
             else:
                 self.attrs[k] = self.def_attrs[k]
-
-        self.position = (0,
-                         0,
-                         self.attrs['position'][2] - self.attrs['position'][0],
-                         self.attrs['position'][3] - self.attrs['position'][1])
         
     def draw_grid(self):
         w,h = self.size

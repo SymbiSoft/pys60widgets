@@ -3,8 +3,8 @@ import sys
 
 __all__ = [ "PW_DRIVE", "PW_DIR", "PW_WIDGETS_DIR", "PWCFG" ]
 
-PW_DRIVE = r"d:"
-PW_DIR = os.path.join(PW_DRIVE,r"\projetos\pys60\pys60widgets")
+PW_DRIVE = r"e:"
+PW_DIR = os.path.join(PW_DRIVE,r"\python\lib")
 PW_WIDGETS_DIR = os.path.join(PW_DIR,r"widgets")
 
 class PWidgetCfg(object):
