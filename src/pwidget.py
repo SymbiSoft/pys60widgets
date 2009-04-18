@@ -35,7 +35,8 @@ class PWidget(object):
         return self.canvas
 
     def redraw(self):
-        self.mngr.redraw(self)
+        if self.mngr.widget_is_full_screen():
+            self.mngr.redraw(self)
 
     def got_focus(self):
         self.mngr.set_menu(self.menu)
