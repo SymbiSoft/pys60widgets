@@ -4,12 +4,15 @@ __all__ = [ "PWidget" ]
 
 class PWidget(object):
 
-    def __init__(self,mngr,title=u"",menu=[]):
+    def __init__(self,mngr,title=u"",menu=[],size=None):
         self.mngr = mngr
         self.menu = menu
         self.title = title
         self.name = u"Widget"
-        self.size = self.mngr.get_size()
+        if not size:
+            self.size = self.mngr.get_size()
+        else:
+            self.size = size
         self.canvas = graphics.Image.new(self.size)
 
     def get_name(self):
