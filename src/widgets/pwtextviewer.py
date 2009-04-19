@@ -8,11 +8,17 @@ from appuifw import available_fonts, popup_menu
 __all__ = ["PWTextViewer"]
 
 LIPSUM = u"""Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin feugiat, mi id consectetur cursus, sem diam pretium nibh, et tristique libero erat luctus odio. Morbi dapibus mauris sit amet lectus.
+
 Ut est eros, aliquam ut, dapibus sed, vehicula at, nisl. Ut turpis dui, consequat eget, congue et, consequat eu, massa. In hac habitasse platea dictumst. Pellentesque mi felis, hendrerit id, imperdiet ut, venenatis nec, velit. 
+
 Suspendisse et tellus ut mauris bibendum tempus. Nullam molestie. Etiam lobortis. Maecenas sit amet nunc. Vivamus diam massa, tincidunt id, iaculis nec, dignissim quis, massa. Pellentesque tempor leo rutrum neque. Donec sit amet nisi a dui tristique eleifend. Nunc in mauris sed enim pulvinar iaculis. Vestibulum dui turpis, accumsan et, fermentum vitae, aliquam vitae, eros.
+
 Sed mattis nisi at orci. Etiam ante orci, ornare sit amet, placerat feugiat, venenatis eu, dui. Sed pretium blandit ante. Curabitur feugiat orci condimentum enim. Quisque bibendum nulla eu massa. Maecenas tempor lobortis libero. Etiam lorem sapien, imperdiet at, vestibulum nec, molestie nec, dui. Etiam feugiat sem id augue ullamcorper luctus. Pellentesque gravida dictum dui. Pellentesque sit amet orci. Maecenas elit. Suspendisse cursus accumsan dui. Vestibulum mi magna, volutpat ut, ornare quis, vulputate sit amet, mi. Aenean a lectus sit amet ante malesuada egestas.
+
 Donec interdum. Nam urna nibh, auctor non, dictum eget, convallis eget, erat. Duis lorem arcu, varius nec, auctor ut, lobortis sit amet, leo. Quisque sodales egestas metus. Pellentesque mattis risus vel velit. Praesent porta turpis in ipsum. In sed quam et libero suscipit vestibulum. Donec ut sem. Nullam at mauris vel eros porttitor condimentum. Vestibulum vitae nibh et neque placerat bibendum. Maecenas ultricies orci ut ipsum. In hendrerit massa at lorem. Nunc fermentum dapibus felis. Nunc mauris. Ut vitae sem quis ligula malesuada congue. Donec luctus mauris sit amet urna. Morbi odio dolor, tincidunt at, ultrices ac, tincidunt at, urna. Integer et justo. Nulla enim elit, ornare nec, lacinia id, auctor sed, tellus.
+
 Mauris enim diam, lobortis at, eleifend malesuada, sodales sit amet, quam. Pellentesque porta leo nec arcu. Aliquam eget sapien quis urna fermentum ornare. Fusce posuere, est eu vehicula bibendum, odio tellus lobortis nunc, quis euismod justo ante a magna. Nulla nec odio. Morbi ac urna ut erat placerat mollis. Vestibulum sed sem et nisl dapibus fringilla. Nam mattis ante. In rutrum blandit eros. Pellentesque ut sem. Aliquam facilisis. Praesent leo erat, posuere eu, malesuada in, tincidunt sed, leo. Curabitur vitae nulla. Sed scelerisque vehicula est.
+
 Quisque nec diam. Vestibulum hendrerit. Nunc lacus erat, convallis sed, malesuada vel, interdum porttitor, diam. Curabitur viverra, tortor elementum placerat porta, turpis dolor mattis magna, vel tempor arcu metus in tortor. Maecenas ut dolor. Aliquam erat volutpat. Nullam a risus sed diam pellentesque feugiat. Pellentesque non turpis id justo malesuada consectetur. Integer nulla. Donec semper odio euismod nulla tincidunt varius. Suspendisse non lacus sit amet orci rutrum vulputate. Fusce sit amet urna quis nibh elementum sagittis. Proin blandit venenatis urna. Donec iaculis odio eget est. Sed eleifend semper massa. Nulla fringilla ligula at eros. Mauris lobortis sollicitudin odio. Etiam nunc. 
 """
 
@@ -36,10 +42,10 @@ class PWTextViewer(PWidget):
                            'height':320,
                            'bg_color':PWColor([255,255,192,255]),
                            'fg_color':PWColor([0,0,128,255]),
-                           'scrollbar_color':PWColor([0,0,128,255]),
+                           'scrollbar_color':PWColor([128,0,0,255]),
                            'scrollbar_width':6,
                            'font':u"dense",
-                           'font_size':14,
+                           'font_size':10,
                            'margin_top':3,
                            'margin_left':3,
                            'margin_bottom':0,
@@ -67,8 +73,8 @@ class PWTextViewer(PWidget):
         handle_width = self.attrs['scrollbar_width']
         glow_width = int(handle_width / 2)
         shadow_width = handle_width - glow_width
-        shadow_color = PWColor(self.attrs['scrollbar_color'].get_color())
-        glow_color = PWColor(shadow_color.get_color())
+        shadow_color = PWColor(self.attrs['scrollbar_color'].color)
+        glow_color = PWColor(shadow_color.color)
         white = PWColor(WHITE)
         glow_color.combine(white, 0.3)
         a = self.attrs
@@ -91,6 +97,7 @@ class PWTextViewer(PWidget):
     def draw_text(self):
         i = 1;
         for line in self.lines:
+            line = line.strip(u"\n")
             self.canvas.text((self.attrs['margin_left'], self.attrs['margin_top'] + i * self.attrs['font_size']),
                                 line, 
                                 fill = self.attrs['fg_color'].get_color(), 
@@ -101,7 +108,7 @@ class PWTextViewer(PWidget):
     # http://discussion.forum.nokia.com/forum/showthread.php?t=124666
     def text_wrap(self):
         self.lines = []
-        paragraphs = self.text.split("\n")
+        paragraphs = self.text.splitlines(True)
         width = self.attrs['width'] - self.attrs['scrollbar_width'] - self.attrs['margin_left'] - self.attrs['margin_right']
         for text_left in paragraphs:
             while len(text_left) > 0:
