@@ -14,13 +14,15 @@ class PWidgetMngr(object):
     
     def __init__(self):
         app.screen = "full"
-        self.layouts = { u"4x3":self.layout_4x3 }
+        self.order = range(6)
+        self.layouts = { u"4x3":self.layout_4x3, u"3x2":self.layout_3x2 }
         self.size = sysinfo.display_pixels()
         self.window_list = []
         self.bind_list = {}
         self.background = None
         self.active_focus = 0
         self.active_widget = None
+        self.drawing_in_progress = False
         self.widgets = {}         
         self.canvas = Canvas(redraw_callback = self.redraw,
                              event_callback = self.event,
@@ -32,8 +34,8 @@ class PWidgetMngr(object):
         self.menu = [(u"Exit",self.close_app) ]
         app.menu = self.menu
         self.lock = e32.Ao_lock()
-        self.bind(self,key_codes.EKeyLeftArrow, self.focus_next)
-        self.bind(self,key_codes.EKeyRightArrow, self.focus_prev)
+        self.bind(self,key_codes.EKeyLeftArrow, self.focus_prev)
+        self.bind(self,key_codes.EKeyRightArrow, self.focus_next)
         self.bind(self,key_codes.EKeySelect, self.show_widget)
         app.exit_handler = self.close_app
         
@@ -104,6 +106,12 @@ class PWidgetMngr(object):
         self.active_focus = len(self.window_list) - 1
        
     def redraw(self,rect=None):
+        if self.drawing_in_progress:
+            print "redraw in progress"
+            return
+
+        self.drawing_in_progress = True
+        
         if self.active_widget:
             self.canvas.blit(self.active_widget.get_canvas())
         else:
@@ -112,9 +120,40 @@ class PWidgetMngr(object):
             else:
                 self.screen.clear((255,255,255))            
             if self.window_list:
-                self.layouts[u"4x3"](range(len(self.window_list)))
+                self.layouts[u"3x2"](self.order)
             self.canvas.blit(self.screen)
             #order = [ c%nw for c in range(self.active_focus+1,self.active_focus+1+nw) ]
+
+        self.drawing_in_progress = False
+        
+    def layout_3x2(self,order):
+        """
+        """
+        ws = 5
+        ww = (self.size[0]-ws)/3 - ws
+        wh = (self.size[1]-ws)/2 - ws
+        y = ws
+        n = 0
+        for lin in range(2):
+            x = ws
+            for col in range(3):
+                # focus
+                if order[n] == self.active_focus:
+                    self.screen.rectangle((x-2,y-2,x+ww+2,y+wh+2),
+                                          fill=(255,0,0),
+                                          outline=(255,0,0))
+                if  n >=  len(self.window_list) or n >= 6:
+                    break
+                w = self.window_list[order[n]]
+                # TODO: resize is generating exception ... async mode necessary
+                try:
+                    self.screen_aux = w.get_canvas().resize((ww,wh))
+                    self.screen.blit(self.screen_aux,target=(x,y),source=((0,0),(ww,wh)))
+                except:
+                    print "error: canvas resize"
+                x += ww + ws
+                n += 1
+            y += wh + ws
         
     def layout_4x3(self,order):
         """
@@ -124,15 +163,15 @@ class PWidgetMngr(object):
         wh = (self.size[1]-ws)/3 - ws
         y = ws
         n = 0
-        for col in range(4):
+        for lin in range(3):
             x = ws
-            for lin in range(3):
+            for col in range(4):
                 # focus
                 if n == self.active_focus:
                     self.screen.rectangle((x-2,y-2,x+ww+2,y+wh+2),
                                           fill=(255,0,0),
                                           outline=(255,0,0))
-                if  n >=  len(self.window_list):
+                if  n >=  len(self.window_list) or n >= 12:
                     break
                 w = self.window_list[order[n]]
                 # TODO: resize is generating exception ... async mode necessary
@@ -153,10 +192,23 @@ class PWidgetMngr(object):
 
     def focus_next(self):
         self.active_focus = (self.active_focus + 1) % len(self.window_list)
+        if self.active_focus not in self.order:
+            if self.active_focus > self.order[-1]:
+                self.order = range(self.active_focus-5,self.active_focus + 1)
+            else:
+                self.order = range(self.active_focus,self.active_focus + 6)
+        print "->", self.active_focus, self.order
         self.redraw()
         
     def focus_prev(self):
         self.active_focus = (self.active_focus - 1) % len(self.window_list)
+        if self.active_focus not in self.order:
+            if self.active_focus > self.order[-1]:
+                self.order = range(self.active_focus-5,self.active_focus + 1)
+            else:
+                self.order = range(self.active_focus,self.active_focus + 6)
+
+        print "<-", self.active_focus, self.order
         self.redraw()
 
     def set_menu(self,menu):
