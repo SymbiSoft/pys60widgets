@@ -61,9 +61,7 @@ class PWTextViewer(PWidget):
     
     def set_text(self, text):
         self.text = text
-        #todo wrap text
-        """if self.canvas:
-            self.update_canvas()"""
+        self.text_wrap()
 
     def update_canvas(self):
         self.draw_background()
