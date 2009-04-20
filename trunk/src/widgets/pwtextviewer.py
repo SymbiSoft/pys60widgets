@@ -1,5 +1,6 @@
 import e32
 import re
+import key_codes
 from pwidget import *
 from pwcolor import *
 from graphics import *
@@ -30,6 +31,7 @@ class PWTextViewer(PWidget):
         PWidget.__init__(self,mngr,self.name, menu)
         self.check_default_values(attrs)
         self.cursor = [0,0]
+        self.set_binds(True)
 
     def check_default_values(self, attrs):
         """ Given some user attributes, define all attributes
@@ -50,7 +52,7 @@ class PWTextViewer(PWidget):
                            'margin_left':3,
                            'margin_bottom':0,
                            'margin_right':3,
-                           'text': LIPSUM}
+                           'text': LIPSUM }
 
         for k in self.def_attrs.keys():
             if attrs.has_key(k):
@@ -59,6 +61,71 @@ class PWTextViewer(PWidget):
                 self.attrs[k] = self.def_attrs[k]
         
         self.set_text(self.attrs['text'])
+        
+        white = PWColor(WHITE)
+        self.handle_width = self.attrs['scrollbar_width']
+        self.glow_width   = int(self.handle_width / 2)
+        self.shadow_width = self.handle_width - self.glow_width
+        self.shadow_color = PWColor(self.attrs['scrollbar_color'].color)
+        self.glow_color   = PWColor(self.shadow_color.color)
+        self.glow_color.combine(white, 0.3)
+        
+        #Cursor uses the inverse colors fg => bg
+        self.cursor_fg_color = PWColor(self.attrs['bg_color'].color)
+        self.cursor_bg_color = PWColor(self.attrs['fg_color'].color)
+        self.cursor_glow = PWColor(self.cursor_bg_color.color)
+        self.cursor_glow.combine(white, 0.3)
+    
+    def set_binds(self,val):
+        """ Enable or disable bindings
+        """
+        if val:
+            self.bind(key_codes.EKeyUpArrow, self.up_key)
+            self.bind(key_codes.EKeyDownArrow, self.down_key)
+            self.bind(key_codes.EKeyLeftArrow, self.left_key)
+            self.bind(key_codes.EKeyRightArrow, self.right_key)
+        else:
+            self.bind(key_codes.EKeyUpArrow, None)
+            self.bind(key_codes.EKeyDownArrow, None)
+            self.bind(key_codes.EKeyLeftArrow, None)
+            self.bind(key_codes.EKeyRightArrow, None)
+            
+    def up_key(self):
+        if self.cursor[0] > 0:
+            self.cursor[0] -= 1
+            if len(self.lines[self.cursor[0]]) == 0:
+                self.cursor[1] = 0
+            elif self.cursor[1] >= len(self.lines[self.cursor[0]]):
+                self.cursor[1] = len(self.lines[self.cursor[0]]) - 1
+        self.redraw_textview()
+
+    def down_key(self):
+        if self.cursor[0] < len(self.lines) - 1:
+            self.cursor[0] += 1
+            if len(self.lines[self.cursor[0]]) == 0:
+                self.cursor[1] = 0
+            elif self.cursor[1] >= len(self.lines[self.cursor[0]]):
+                self.cursor[1] = len(self.lines[self.cursor[0]]) - 1
+        self.redraw_textview()
+
+    def left_key(self):
+        if self.cursor[1] > 0:
+            self.cursor[1] -= 1
+        elif self.cursor[0] > 0:
+            self.cursor[0] -= 1
+            if len(self.lines[self.cursor[0]]) == 0:
+                self.cursor[1] = 0
+            else:
+                self.cursor[1] = len(self.lines[self.cursor[0]]) - 1
+        self.redraw_textview()
+
+    def right_key(self):
+        if self.cursor[1] < len(self.lines[self.cursor[0]]) - 1:
+            self.cursor[1] += 1
+        elif self.cursor[0] < len(self.lines) - 1:
+            self.cursor[0] += 1
+            self.cursor[1] = 0
+        self.redraw_textview()
 
     def get_name(self):
         return self.name
@@ -67,29 +134,56 @@ class PWTextViewer(PWidget):
         self.add_window(self)
         
     def draw_cursor(self):
-        pass
-    
+        if len(self.lines[self.cursor[0]]) > 0:
+            sleft = self.lines[self.cursor[0]][:self.cursor[1]]
+            c = self.lines[self.cursor[0]][self.cursor[1]]
+            
+            lrect = self.canvas.measure_text(sleft, font=(self.attrs['font'],
+                                                        self.attrs['font_size'],
+                                                        FONT_ANTIALIAS))[0]
+            crect = self.canvas.measure_text(c, font=(self.attrs['font'],
+                                                        self.attrs['font_size'],
+                                                        FONT_ANTIALIAS))[0]
+            
+            w = crect[2]
+            h = self.attrs['font_size']
+            x = self.attrs['margin_left'] + lrect[2] + 1
+            y = self.attrs['margin_top'] + (self.cursor[0] + 1) * self.attrs['font_size']
+            
+            self.canvas.rectangle((x,y-h,x+w,y),
+                                    outline=None,
+                                    fill=self.cursor_bg_color.get_color())
+            self.canvas.text((x,y),
+                                c, fill = self.cursor_fg_color.get_color(), 
+                                   font = (self.attrs['font'],
+                                   self.attrs['font_size'],FONT_ANTIALIAS))
+        else:
+            self.canvas.rectangle((self.attrs['margin_left'],
+                                    self.attrs['margin_top'] + (self.cursor[0] + 1) * self.attrs['font_size'] - self.attrs['font_size'],
+                                    self.attrs['margin_left']+ self.attrs['font_size'],
+                                    self.attrs['margin_top'] + (self.cursor[0] + 1) * self.attrs['font_size']),
+                                    outline=None,
+                                    fill=self.cursor_bg_color.get_color())
+
     def draw_scrollbar(self):
-        handle_width = self.attrs['scrollbar_width']
-        glow_width = int(handle_width / 2)
-        shadow_width = handle_width - glow_width
-        shadow_color = PWColor(self.attrs['scrollbar_color'].color)
-        glow_color = PWColor(shadow_color.color)
-        white = PWColor(WHITE)
-        glow_color.combine(white, 0.3)
         a = self.attrs
+        hw = self.handle_width
+        sc = self.shadow_color
+        gc = self.glow_color
+        sw = self.shadow_width
+        gw = self.glow_width
         #Draw scrollbar BG
-        self.canvas.rectangle((a['width']-handle_width,a['top'],a['width'],a['height']),
-                                outline=shadow_color.get_color(),
+        self.canvas.rectangle((a['width']-hw,a['top'],a['width'],a['height']),
+                                outline=sc.get_color(),
                                 fill=None)
         #Draw scrollbar handle - first the shadow
-        self.canvas.rectangle((a['width']-shadow_width,a['top'],a['width'],a['top']+30),
-                                outline=shadow_color.get_color(),
-                                fill=shadow_color.get_color())
+        self.canvas.rectangle((a['width']-sw,a['top'],a['width'],a['top']+30),
+                                outline=sc.get_color(),
+                                fill=sc.get_color())
         #and now the glow
-        self.canvas.rectangle((a['width']-handle_width,a['top'],a['width']-handle_width+glow_width,a['top']+30),
-                                outline=glow_color.get_color(),
-                                fill=glow_color.get_color())
+        self.canvas.rectangle((a['width']-hw,a['top'],a['width']-hw+gw,a['top']+30),
+                                outline=gc.get_color(),
+                                fill=gc.get_color())
     
     def draw_background(self):
         self.canvas.clear(self.attrs['bg_color'].get_color())
@@ -113,7 +207,9 @@ class PWTextViewer(PWidget):
         for text_left in paragraphs:
             while len(text_left) > 0:
                 bounding, to_right, fits = self.canvas.measure_text(text_left,
-                                                             font=(self.attrs['font'],self.attrs['font_size'],FONT_ANTIALIAS),
+                                                             font=(self.attrs['font'],
+                                                                    self.attrs['font_size'],
+                                                                    FONT_ANTIALIAS),
                                                              maxwidth=width,
                                                              maxadvance=width)
                 if fits <= 0:
@@ -133,7 +229,7 @@ class PWTextViewer(PWidget):
                             adjust = 1
                         slice = slice[0:rindex]
                 
-                self.lines.append(slice)
+                self.lines.append(slice.strip(u"\n"))
                 text_left = text_left[len(slice)+adjust:]
 
     def set_text(self, text):
@@ -155,7 +251,7 @@ class PWTextViewer(PWidget):
             if s is not None:
                 self.attrs['font_size'] = int(sizes[s])
                 self.text_wrap()
-            self.update_canvas()
+            self.redraw_textview()
 
     def change_color(self):
         scolors = [u"White",u"Black",u"Red",u"Green",u"Blue",u"Yellow",u"Magenta",u"Cyan",u"Gray"]
@@ -166,10 +262,15 @@ class PWTextViewer(PWidget):
         c = popup_menu(scolors,u"Foreground:")
         if c is not None:
             self.attrs['fg_color'] = PWColor(colors[c])
-        self.update_canvas()
+        self.redraw_textview()
     
-    def update_canvas(self):
+    def redraw_textview(self):
         self.draw_background()
         self.draw_text()
         self.draw_cursor()
         self.draw_scrollbar()
+        self.redraw()
+
+    
+    def update_canvas(self):
+        self.redraw_textview()
