@@ -9,12 +9,17 @@ class PWidget(object):
         self.menu = menu
         self.title = title
         self.name = u"Widget"
+        self.size = (0,0)
         if not size:
-            self.size = self.mngr.get_size()
-        else:
-            self.size = size
-        self.canvas = graphics.Image.new(self.size)
+            size = self.mngr.get_size()
+        self.set_size(size)
 
+    def set_size(self,size):
+        if self.size != size:
+            self.size = size
+            # Is explicit del for previous canvas necessary ?
+            self.canvas = graphics.Image.new(self.size)
+        
     def get_name(self):
         """ Returns the plugin name. Must be a unicode string
         """
