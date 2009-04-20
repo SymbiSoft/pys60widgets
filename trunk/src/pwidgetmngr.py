@@ -23,6 +23,7 @@ class PWidgetMngr(object):
         self.active_focus = 0
         self.active_widget = None
         self.drawing_in_progress = False
+        self.effect_in_progress = False
         self.widgets = {}         
         self.canvas = Canvas(redraw_callback = self.redraw,
                              event_callback = self.event,
@@ -109,6 +110,10 @@ class PWidgetMngr(object):
             self.tmp_debug = (self.tmp_debug + 1) % 20
             if self.tmp_debug == 0:
                 print "redraw in progress"
+            return
+
+        if self.effect_in_progress:
+            print "effect in progress"
             return
 
         self.drawing_in_progress = True
@@ -221,31 +226,37 @@ class PWidgetMngr(object):
         app.menu = m
 
     def show_next_widget(self):
-        print "bug ... remove this line and effect will disappear ... "
+        #print "bug ... remove this line and effect will disappear ... "
+        self.effect_in_progress = True
         curr = self.window_list[self.active_focus].get_canvas()
         self.active_focus = (self.active_focus + 1) % len(self.window_list)
         next = self.window_list[self.active_focus].get_canvas()
         self.screen.blit(curr)
+        e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
         xstep = 8
         for x in range(xstep,self.size[0],xstep):
             self.screen.blit(next,target=(self.size[0]-x,0),source=((0,0),(x,self.size[1])))
             self.canvas.blit(self.screen)
         self.active_widget = self.window_list[self.active_focus]
         self.active_widget.got_focus()
+        self.effect_in_progress = False
         self.redraw()
             
     def show_prev_widget(self):
-        print "bug ... remove this line and effect will disappear ... "
+        #print "bug ... remove this line and effect will disappear ... "
+        self.effect_in_progress = True
         curr = self.window_list[self.active_focus].get_canvas()
         self.active_focus = (self.active_focus - 1) % len(self.window_list)
         next = self.window_list[self.active_focus].get_canvas()
         self.screen.blit(curr)
+        e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
         xstep = 8
         for x in range(self.size[0]-xstep,-xstep,-xstep):
             self.screen.blit(next,target=(0,0),source=((x,0),(self.size[0]-x,self.size[1])))
             self.canvas.blit(self.screen)
         self.active_widget = self.window_list[self.active_focus]
         self.active_widget.got_focus()
+        self.effect_in_progress = False
         self.redraw()
 
     
