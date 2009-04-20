@@ -29,7 +29,6 @@ class PWidgetMngr(object):
                              resize_callback = self.resize)
         self.size = sysinfo.display_pixels()
         self.screen = graphics.Image.new(self.size)
-        self.screen_aux = graphics.Image.new(self.size)
         app.body = self.canvas
         self.menu = [(u"Exit",self.close_app) ]
         app.menu = self.menu
@@ -38,7 +37,7 @@ class PWidgetMngr(object):
         self.bind(self,key_codes.EKeyRightArrow, self.focus_next)
         self.bind(self,key_codes.EKeySelect, self.show_widget)
         app.exit_handler = self.close_app
-        
+        self.tmp_debug = 0
         self.load_widgets()
 
     def get_size(self):
@@ -70,12 +69,12 @@ class PWidgetMngr(object):
 
     def bind_dispatch(self,key):
         for updt in self.bind_list[key].values():
-            updt['cbk']()
-       #     if updt['widget']:
-       #         w=updt['win']
-       #         self.screen.blit(w.get_canvas(),target=w.get_position(),source=((0,0),w.get_size()))
-       # if updt['widget']:                
-       #     self.update_canvas()
+            if self.widget_in_full_screen():
+                if updt['win'] != self:
+                    updt['cbk']()
+            else:
+                if updt['win'] == self:
+                    updt['cbk']()
             
     def load_widgets(self):
         try:
@@ -107,7 +106,9 @@ class PWidgetMngr(object):
        
     def redraw(self,rect=None):
         if self.drawing_in_progress:
-            print "redraw in progress"
+            self.tmp_debug = (self.tmp_debug + 1) % 20
+            if self.tmp_debug == 0:
+                print "redraw in progress"
             return
 
         self.drawing_in_progress = True
@@ -129,7 +130,7 @@ class PWidgetMngr(object):
     def layout_3x2(self,order):
         """
         """
-        ws = 5
+        ws = 10
         ww = (self.size[0]-ws)/3 - ws
         wh = (self.size[1]-ws)/2 - ws
         y = ws
@@ -147,8 +148,8 @@ class PWidgetMngr(object):
                 w = self.window_list[order[n]]
                 # TODO: resize is generating exception ... async mode necessary
                 try:
-                    self.screen_aux = w.get_canvas().resize((ww,wh))
-                    self.screen.blit(self.screen_aux,target=(x,y),source=((0,0),(ww,wh)))
+                    screen_aux = w.get_canvas().resize((ww,wh))
+                    self.screen.blit(screen_aux,target=(x,y),source=((0,0),(ww,wh)))
                 except:
                     print "error: canvas resize"
                 x += ww + ws
@@ -158,7 +159,7 @@ class PWidgetMngr(object):
     def layout_4x3(self,order):
         """
         """
-        ws = 5
+        ws = 10
         ww = (self.size[0]-ws)/4 - ws
         wh = (self.size[1]-ws)/3 - ws
         y = ws
@@ -176,8 +177,8 @@ class PWidgetMngr(object):
                 w = self.window_list[order[n]]
                 # TODO: resize is generating exception ... async mode necessary
                 try:
-                    self.screen_aux = w.get_canvas().resize((ww,wh))
-                    self.screen.blit(self.screen_aux,target=(x,y),source=((0,0),(ww,wh)))
+                    screen_aux = w.get_canvas().resize((ww,wh))
+                    self.screen.blit(screen_aux,target=(x,y),source=((0,0),(ww,wh)))
                 except:
                     print "error: canvas resize"
                 x += ww + ws
@@ -197,7 +198,7 @@ class PWidgetMngr(object):
                 self.order = range(self.active_focus-5,self.active_focus + 1)
             else:
                 self.order = range(self.active_focus,self.active_focus + 6)
-        print "->", self.active_focus, self.order
+
         self.redraw()
         
     def focus_prev(self):
@@ -208,17 +209,48 @@ class PWidgetMngr(object):
             else:
                 self.order = range(self.active_focus,self.active_focus + 6)
 
-        print "<-", self.active_focus, self.order
         self.redraw()
 
     def set_menu(self,menu):
         """ Merge window menu with PWidgetMngr menu
         """
-        m = menu + [(u"PyWidgets",self.show_main_screen)] + self.menu
+        m = menu + [(u"PyWidgets",((u"Next",self.show_next_widget),
+                                   (u"Prev",self.show_prev_widget),
+                                   (u"Desktop",self.show_main_screen)
+                                   ))] + self.menu
         app.menu = m
 
+    def show_next_widget(self):
+        print "bug ... remove this line and effect will disappear ... "
+        curr = self.window_list[self.active_focus].get_canvas()
+        self.active_focus = (self.active_focus + 1) % len(self.window_list)
+        next = self.window_list[self.active_focus].get_canvas()
+        self.screen.blit(curr)
+        xstep = 8
+        for x in range(xstep,self.size[0],xstep):
+            self.screen.blit(next,target=(self.size[0]-x,0),source=((0,0),(x,self.size[1])))
+            self.canvas.blit(self.screen)
+        self.active_widget = self.window_list[self.active_focus]
+        self.active_widget.got_focus()
+        self.redraw()
+            
+    def show_prev_widget(self):
+        print "bug ... remove this line and effect will disappear ... "
+        curr = self.window_list[self.active_focus].get_canvas()
+        self.active_focus = (self.active_focus - 1) % len(self.window_list)
+        next = self.window_list[self.active_focus].get_canvas()
+        self.screen.blit(curr)
+        xstep = 8
+        for x in range(self.size[0]-xstep,-xstep,-xstep):
+            self.screen.blit(next,target=(0,0),source=((x,0),(self.size[0]-x,self.size[1])))
+            self.canvas.blit(self.screen)
+        self.active_widget = self.window_list[self.active_focus]
+        self.active_widget.got_focus()
+        self.redraw()
+
+    
     def show_widget(self):
-        if self.window_list:
+        if not self.widget_in_full_screen():
             self.active_widget = self.window_list[self.active_focus]
             self.active_widget.got_focus()
             self.redraw()
@@ -228,7 +260,7 @@ class PWidgetMngr(object):
         self.active_widget = None
         self.redraw()
 
-    def widget_is_full_screen(self):
+    def widget_in_full_screen(self):
         """ Returns when an widget is in full screen mode or not
         """
         if self.active_widget:
