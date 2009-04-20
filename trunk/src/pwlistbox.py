@@ -3,10 +3,7 @@
 # marcelobarrosalmeida@gmail.com
 # License: GPL3
 
-from appuifw import *
-import e32
 import sysinfo
-import os
 import graphics
 import key_codes
 from math import ceil, floor
@@ -20,8 +17,9 @@ class PWListBox(PWidget):
         """ Creates a list box on canvas. Just fill the desired parameters attributes.
         """
         self.name = u"ListBox"
-        PWidget.__init__(self,mngr,self.name,size=attrs['position'])
         self.check_default_values(attrs)
+        PWidget.__init__(self,mngr,self.name,size=self.attrs['size'])
+        self.rebuild_view()
         self.set_binds(True)
 
     def run(self): pass
@@ -49,7 +47,7 @@ class PWListBox(PWidget):
         self.attrs = {}
         self.def_attrs = {'items':[],
                           'cbk':lambda:None,
-                          'position':(0,0,self.size[0],self.size[1]),
+                          'size':sysinfo.display_pixels(),
                           'scrollbar_width':5,
                           'margins':(2,2,2,2),
                           'font_name':'dense',
@@ -85,22 +83,14 @@ class PWListBox(PWidget):
         fh = -(graphics.Image.new((1,1)).measure_text("[qg_|^y",font=self.attrs['font_name'])[0][1])
         self.attrs['font_height'] = fh
         self.attrs['line_space'] = max(3,fh/4,self.attrs['line_space'])
-        
-        # translating to origin (0,0)
-        self.position = (0,
-                         0,
-                         self.attrs['position'][2] - self.attrs['position'][0],
-                         self.attrs['position'][3] - self.attrs['position'][1])
-        
+               
         # no images, no border
         if not self.attrs['images']:
             self.attrs['image_size'] = (0,0)
             
         # if we have a title, add additional space for it
         if self.attrs['title']:
-            self.attrs['title_position']=(0,
-                                          0,
-                                          self.position[2],
+            self.attrs['title_position']=(0,0,self.attrs['size'][0],
                                           self.attrs['font_height']+2*self.attrs['line_space'])
         else:
             self.attrs['title_position']=(0,0,0,0)
@@ -112,26 +102,22 @@ class PWListBox(PWidget):
             self.attrs['selection_fill_color'][2]*0.80 | int(255*0.20))
         
         # img_margin + img_size + text_margin
-        self.lstbox_xa = self.position[0] + self.attrs['margins'][0] + \
-                         self.attrs['image_size'][0] + self.attrs['image_margin']
-        self.lstbox_ya = self.position[1] + self.attrs['margins'][1] + \
-                         self.attrs['title_position'][3]
-        self.lstbox_xb = self.position[2] - self.attrs['margins'][2] - \
+        self.lstbox_xa = self.attrs['margins'][0] + self.attrs['image_size'][0] + \
+                         self.attrs['image_margin']
+        self.lstbox_ya = self.attrs['margins'][1] + self.attrs['title_position'][3]
+        self.lstbox_xb = self.attrs['size'][0] - self.attrs['margins'][2] - \
                          self.attrs['scrollbar_width']
-        self.lstbox_yb = self.position[3] - self.attrs['margins'][3]
+        self.lstbox_yb = self.attrs['size'][1] - self.attrs['margins'][3]
         
-        self.scrbar_xa = self.position[2] - self.attrs['scrollbar_width']
-        self.scrbar_ya = self.position[1] + self.attrs['title_position'][3]
-        self.scrbar_xb = self.position[2]
-        self.scrbar_yb = self.position[3]
+        self.scrbar_xa = self.attrs['size'][0] - self.attrs['scrollbar_width']
+        self.scrbar_ya = self.attrs['title_position'][3]
+        self.scrbar_xb = self.attrs['size'][0]
+        self.scrbar_yb = self.attrs['size'][1]
 
-        self.images_xa = self.position[0] + self.attrs['image_margin']
+        self.images_xa = self.attrs['image_margin']
 
-        self.selbox_xa = self.position[0]
-        self.selbox_xb = self.position[2] - self.attrs['scrollbar_width']
-
-        self.lstbox_size = (self.position[2]-self.position[0],
-                            self.position[3]-self.position[1])
+        self.selbox_xa = 0
+        self.selbox_xb = self.attrs['size'][0] - self.attrs['scrollbar_width']
 
         # selected item. It is relative to 0.
         self._current_sel = 0
@@ -142,27 +128,27 @@ class PWListBox(PWidget):
         self._selection_view = [0,0]
         # save original data
         self._items = self.attrs['items']
+
+    def rebuild_view(self):        
         self.build_list(self.attrs['items'])        
         self.calculate_sel_view()
         self.redraw_list()
+        self.set_size(self.attrs['size'])
         
     def reconfigure(self,attrs={}):
         """ Given some user attributes, define e reconfigure all listbox attributes
         """        
         self.check_default_values(attrs)
+        self.rebuild_view()
         
     def redraw_list(self,rect=None):
-        """ Redraw the listbox. This routine only updates the listbox area, defined
-            self.attrs['position']
+        """ Redraw the listbox. This routine only updates the listbox area
         """
         #self.set_binds(False) # it is necessary to disable bindings since redrawing may takes a long time
         self.clear_list()
         self.draw_title()
         self.draw_scroll_bar()
         self.redraw_items()
-        #self.blit(self.canvas,
-        #          target=(self.attrs['position'][0],self.attrs['position'][1]),
-        #          source=((0,0),self.size))
         #self.set_binds(True)
 
     def update_canvas(self):
@@ -356,9 +342,6 @@ class PWListBox(PWidget):
         """ Clear screen
         """
         self.canvas.clear(self.attrs['font_fill_color'])
-        #self.blit(self.canvas,
-        #          target=(self.attrs['position'][0],self.attrs['position'][1]),
-        #          source=((0,0),self.size))
 
     def current(self):
         """ Return the selected item
