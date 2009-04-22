@@ -123,9 +123,6 @@ class PWidgetMngr(object):
         self.active_focus = len(self.window_list) - 1
        
     def redraw(self,rect=None):
-        if not self.window_list:
-            return
-        
         if self.drawing_in_progress:
             self.tmp_debug = (self.tmp_debug + 1) % 20
             if self.tmp_debug == 0:
@@ -138,8 +135,9 @@ class PWidgetMngr(object):
 
         self.drawing_in_progress = True
 
-        if self.view_mode == self.VIEW_MODE_FULL_SCREEN or \
-           self.view_mode == self.VIEW_MODE_WIDGET:
+        if (self.view_mode == self.VIEW_MODE_FULL_SCREEN or \
+           self.view_mode == self.VIEW_MODE_WIDGET) and \
+           self.window_list:
             widget = self.window_list[self.active_focus]
             self.canvas.blit(widget.get_canvas())
         elif self.view_mode == self.VIEW_MODE_THUMBNAIL:
