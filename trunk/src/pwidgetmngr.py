@@ -7,13 +7,28 @@ from pwidgetcfg import *
 from appuifw import *
 import graphics
 from pwidget import PWidget
+import time
 
 __all__ = [ "PWM" ]
 
 class PWidgetMngr(object):
+
+    """
+    Different view modes for PyWidgets:
+
+    * Thumbnail: all widgets in a thumbnail view
+    * Full screen: just one widget in full screen but with key bindings for thumbnail
+    * Widget: just one widget in full screen but with key bindings for widget
+    """
+    VIEW_MODE_THUMBNAIL = 0
+    VIEW_MODE_FULL_SCREEN = 1
+    VIEW_MODE_WIDGET = 2
+
+    DOUBLE_CLICK_TIME = 0.25    
     
     def __init__(self):
         app.screen = "full"
+        self.view_mode = self.VIEW_MODE_THUMBNAIL
         self.order = range(6)
         self.layouts = { u"4x3":self.layout_4x3, u"3x2":self.layout_3x2 }
         self.size = sysinfo.display_pixels()
@@ -21,7 +36,6 @@ class PWidgetMngr(object):
         self.bind_list = {}
         self.background = None
         self.active_focus = 0
-        self.active_widget = None
         self.drawing_in_progress = False
         self.effect_in_progress = False
         self.widgets = {}         
@@ -34,11 +48,12 @@ class PWidgetMngr(object):
         self.menu = [(u"Exit",self.close_app) ]
         app.menu = self.menu
         self.lock = e32.Ao_lock()
-        self.bind(self,key_codes.EKeyLeftArrow, self.focus_prev)
-        self.bind(self,key_codes.EKeyRightArrow, self.focus_next)
-        self.bind(self,key_codes.EKeySelect, self.show_widget)
+        self.bind(self,key_codes.EKeyLeftArrow, self.show_prev_widget)
+        self.bind(self,key_codes.EKeyRightArrow, self.show_next_widget)
+        self.bind(self,key_codes.EKeySelect, self.change_view_mode)
         app.exit_handler = self.close_app
         self.tmp_debug = 0
+        self.select_double_click = time.time()
         self.load_widgets()
 
     def get_size(self):
@@ -69,8 +84,10 @@ class PWidgetMngr(object):
             self.canvas.bind(key,lambda: self.bind_dispatch(key))
 
     def bind_dispatch(self,key):
+        """ Dispatch callbacks for key according to view mode.
+        """
         for updt in self.bind_list[key].values():
-            if self.widget_in_full_screen():
+            if self.view_mode == self.VIEW_MODE_WIDGET:
                 if updt['win'] != self:
                     updt['cbk']()
             else:
@@ -106,6 +123,9 @@ class PWidgetMngr(object):
         self.active_focus = len(self.window_list) - 1
        
     def redraw(self,rect=None):
+        if not self.window_list:
+            return
+        
         if self.drawing_in_progress:
             self.tmp_debug = (self.tmp_debug + 1) % 20
             if self.tmp_debug == 0:
@@ -117,18 +137,21 @@ class PWidgetMngr(object):
             return
 
         self.drawing_in_progress = True
-        
-        if self.active_widget:
-            self.canvas.blit(self.active_widget.get_canvas())
-        else:
+
+        if self.view_mode == self.VIEW_MODE_FULL_SCREEN or \
+           self.view_mode == self.VIEW_MODE_WIDGET:
+            widget = self.window_list[self.active_focus]
+            self.canvas.blit(widget.get_canvas())
+        elif self.view_mode == self.VIEW_MODE_THUMBNAIL:
             if self.background:
                 self.screen.blit(self.background)
             else:
                 self.screen.clear((255,255,255))            
-            if self.window_list:
-                self.layouts[u"3x2"](self.order)
+            self.layouts[u"3x2"](self.order)
             self.canvas.blit(self.screen)
             #order = [ c%nw for c in range(self.active_focus+1,self.active_focus+1+nw) ]
+        else:
+            print "Invalid mode for redraw"
 
         self.drawing_in_progress = False
         
@@ -196,88 +219,106 @@ class PWidgetMngr(object):
     def resize(self,rect):
         pass
 
-    def focus_next(self):
-        self.active_focus = (self.active_focus + 1) % len(self.window_list)
-        if self.active_focus not in self.order:
-            if self.active_focus > self.order[-1]:
-                self.order = range(self.active_focus-5,self.active_focus + 1)
-            else:
-                self.order = range(self.active_focus,self.active_focus + 6)
-
-        self.redraw()
+    def show_next_widget(self):
         
-    def focus_prev(self):
-        self.active_focus = (self.active_focus - 1) % len(self.window_list)
-        if self.active_focus not in self.order:
-            if self.active_focus > self.order[-1]:
-                self.order = range(self.active_focus-5,self.active_focus + 1)
-            else:
-                self.order = range(self.active_focus,self.active_focus + 6)
-
+        curr = self.window_list[self.active_focus].get_canvas()
+        self.active_focus = (self.active_focus + 1) % len(self.window_list)
+        next = self.window_list[self.active_focus].get_canvas()
+        
+        if self.view_mode == self.VIEW_MODE_THUMBNAIL:
+            # next widget in thumbnail view
+            if self.active_focus not in self.order:
+                if self.active_focus > self.order[-1]:
+                    self.order = range(self.active_focus-5,self.active_focus + 1)
+                else:
+                    self.order = range(self.active_focus,self.active_focus + 6)
+        elif self.view_mode == self.VIEW_MODE_FULL_SCREEN or \
+             self.view_mode == self.VIEW_MODE_THUMBNAIL:
+            # effects in full screen
+            self.effect_in_progress = True
+            self.screen.blit(curr)
+            e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
+            xstep = 8
+            for x in range(xstep,self.size[0],xstep):
+                self.screen.blit(next,target=(self.size[0]-x,0),source=((0,0),(x,self.size[1])))
+                self.canvas.blit(self.screen)
+            self.effect_in_progress = False
+        else:
+            print "Error in show_next_widget: unexpected bind"
+            
         self.redraw()
+
+    def show_next_widget(self):
+
+        curr = self.window_list[self.active_focus].get_canvas()
+        self.active_focus = (self.active_focus - 1) % len(self.window_list)
+        next = self.window_list[self.active_focus].get_canvas()
+
+        if self.view_mode == self.VIEW_MODE_THUMBNAIL:
+            # next widget in thumbnail view
+            if self.active_focus not in self.order:
+                if self.active_focus > self.order[-1]:
+                    self.order = range(self.active_focus-5,self.active_focus + 1)
+                else:
+                    self.order = range(self.active_focus,self.active_focus + 6)
+        elif self.view_mode == self.VIEW_MODE_FULL_SCREEN or \
+             self.view_mode == self.VIEW_MODE_THUMBNAIL:
+            # effects in full screen
+            self.effect_in_progress = True
+            self.screen.blit(curr)
+            e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
+            xstep = 8
+            for x in range(self.size[0]-xstep,-xstep,-xstep):
+                self.screen.blit(next,target=(0,0),source=((x,0),(self.size[0]-x,self.size[1])))
+                self.canvas.blit(self.screen)
+            self.effect_in_progress = False
+        else:
+            print "Error in show_next_widget: unexpected bind"
+            
+        self.redraw()        
 
     def set_menu(self,menu):
         """ Merge window menu with PWidgetMngr menu
         """
         m = menu + [(u"PyWidgets",((u"Next",self.show_next_widget),
                                    (u"Prev",self.show_prev_widget),
-                                   (u"Desktop",self.show_main_screen)
+                                   (u"Playground",self.show_main_screen)
                                    ))] + self.menu
         app.menu = m
-
-    def show_next_widget(self):
-        #print "bug ... remove this line and effect will disappear ... "
-        self.effect_in_progress = True
-        curr = self.window_list[self.active_focus].get_canvas()
-        self.active_focus = (self.active_focus + 1) % len(self.window_list)
-        next = self.window_list[self.active_focus].get_canvas()
-        self.screen.blit(curr)
-        e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
-        xstep = 8
-        for x in range(xstep,self.size[0],xstep):
-            self.screen.blit(next,target=(self.size[0]-x,0),source=((0,0),(x,self.size[1])))
-            self.canvas.blit(self.screen)
-        self.active_widget = self.window_list[self.active_focus]
-        self.active_widget.got_focus()
-        self.effect_in_progress = False
-        self.redraw()
-            
-    def show_prev_widget(self):
-        #print "bug ... remove this line and effect will disappear ... "
-        self.effect_in_progress = True
-        curr = self.window_list[self.active_focus].get_canvas()
-        self.active_focus = (self.active_focus - 1) % len(self.window_list)
-        next = self.window_list[self.active_focus].get_canvas()
-        self.screen.blit(curr)
-        e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
-        xstep = 8
-        for x in range(self.size[0]-xstep,-xstep,-xstep):
-            self.screen.blit(next,target=(0,0),source=((x,0),(self.size[0]-x,self.size[1])))
-            self.canvas.blit(self.screen)
-        self.active_widget = self.window_list[self.active_focus]
-        self.active_widget.got_focus()
-        self.effect_in_progress = False
-        self.redraw()
-
     
-    def show_widget(self):
-        if not self.widget_in_full_screen():
-            self.active_widget = self.window_list[self.active_focus]
-            self.active_widget.got_focus()
-            self.redraw()
+    def change_view_mode(self):
+        """ If in thumbnail mode, show widget in full screen (one click).
+            If already in full screen mode, go to widget view with double click
+            or to back to thumbnail with single click.
+        """
+        if not self.window_list:
+            return
+        
+        double_click = False
+        tm = time.time()
+        if tm - self.select_double_click < self.DOUBLE_CLICK_TIME:
+            double_click = True
+        self.select_double_click = tm
+            
+        if self.view_mode == self.VIEW_MODE_THUMBNAIL:
+            self.view_mode = self.VIEW_MODE_FULL_SCREEN
+        elif self.view_mode == self.VIEW_MODE_FULL_SCREEN:
+            if double_click:
+                self.view_mode = self.VIEW_MODE_WIDGET
+            else:
+                self.view_mode = self.VIEW_MODE_THUMBNAIL
+        else:
+            print "Not expected case for change_view_mode"
+                
+        if self.view_mode == self.VIEW_MODE_WIDGET:
+            self.window_list[self.active_focus].got_focus()
+
+        self.redraw()
             
     def show_main_screen(self):
         app.menu = self.menu
-        self.active_widget = None
+        self.view_mode = self.VIEW_MODE_THUMBNAIL
         self.redraw()
-
-    def widget_in_full_screen(self):
-        """ Returns when an widget is in full screen mode or not
-        """
-        if self.active_widget:
-            return True
-        else:
-            return False
         
     def set_title(self,title):
         app.title = title
