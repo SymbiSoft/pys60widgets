@@ -29,6 +29,12 @@ class PWTextViewer(PWidget):
         self.name = u"TextViewer"
         menu = [(u"Font", self.change_font), (u"Colors", self.change_color)]
         PWidget.__init__(self,mngr,self.name, menu)
+        #test gradient colors
+        c1 = PWColor([0,99,249,255])
+        c2 = PWColor([0,49,124,255])
+        self.gradient = Image.new((self.canvas.size[0],self.canvas.size[1]))
+        c1.gradient(self.gradient, c2, (1,0))
+        #end test gradient
         self.check_default_values(attrs)
         self.cursor = [0,0]
         self.set_binds(True)
@@ -37,14 +43,14 @@ class PWTextViewer(PWidget):
         """ Given some user attributes, define all attributes
         """
         self.attrs = {}
-
+        
         self.def_attrs = { 'top':0,
                            'left':0,
                            'width':240,
                            'height':320,
-                           'bg_color':PWColor([255,255,192,255]),
-                           'fg_color':PWColor([0,0,128,255]),
-                           'scrollbar_color':PWColor([128,0,0,255]),
+                           'bg_color':PWColor([0,49,124,255]),
+                           'fg_color':PWColor([255,255,255,255]),
+                           'scrollbar_color':PWColor([128,128,128,255]),
                            'scrollbar_width':6,
                            'font':u"dense",
                            'font_size':10,
@@ -89,7 +95,7 @@ class PWTextViewer(PWidget):
             self.bind(key_codes.EKeyDownArrow, None)
             self.bind(key_codes.EKeyLeftArrow, None)
             self.bind(key_codes.EKeyRightArrow, None)
-            
+
     def up_key(self):
         if self.cursor[0] > 0:
             self.cursor[0] -= 1
@@ -150,7 +156,7 @@ class PWTextViewer(PWidget):
             x = self.attrs['margin_left'] + lrect[2] + 1
             y = self.attrs['margin_top'] + (self.cursor[0] + 1) * self.attrs['font_size']
             
-            self.canvas.rectangle((x,y-h,x+w,y),
+            self.canvas.rectangle((x-1,y-h-1,x+w-1,y+1),
                                     outline=None,
                                     fill=self.cursor_bg_color.get_color())
             self.canvas.text((x,y),
@@ -186,8 +192,9 @@ class PWTextViewer(PWidget):
                                 fill=gc.get_color())
     
     def draw_background(self):
-        self.canvas.clear(self.attrs['bg_color'].get_color())
-    
+        #self.canvas.clear(self.attrs['bg_color'].get_color())
+        self.canvas.blit(self.gradient)
+
     def draw_text(self):
         i = 1;
         for line in self.lines:

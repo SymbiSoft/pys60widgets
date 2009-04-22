@@ -1,4 +1,5 @@
 import re
+from graphics import Image
 
 __all__ = ["PWColor","WHITE","BLACK","RED","GREEN","BLUE","YELLOW","MAGENTA","CYAN","GRAY"]
 
@@ -64,3 +65,31 @@ class PWColor(object):
 
     def __ne__(self, other):
         return self.color != other.color
+        
+    def gradient(self, img, other, orientation = (0,0)):
+        """ Creates a gradient on given image with two colors
+            orientation: 0 => horizontal, 
+                            0 :> left to right (self to other)
+                            1 :> right to left (other to self)
+                         1 => vertical,
+                            0 :> top to bottom (self to other)
+                            1 :> bottom to top (other to self)
+            size: (with, height)
+        """
+        if orientation[1] == 0:
+            c1 = self.get_color()
+            c2 = other.get_color()
+        else:
+            c1 = other.get_color()
+            c2 = self.get_color()
+        
+        if orientation[0] == 0:
+            d = img.size[0]
+            for i in range(d):
+                c = map(lambda a,b: (a*(d-i) + b*i)/d, c1, c2)
+                img.line(((i,0),(i,d)),outline=tuple(c))
+        else:
+            d = img.size[1]
+            for i in range(d):
+                c = map(lambda a,b: (a*(d-i) + b*i)/d, c1, c2)
+                img.line(((0,i),(d,i)),outline=tuple(c))
