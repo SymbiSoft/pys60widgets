@@ -282,7 +282,7 @@ class PWidgetMngr(object):
         """
         m = menu + [(u"PyWidgets",((u"Next",self.show_next_widget),
                                    (u"Prev",self.show_prev_widget),
-                                   (u"Playground",self.show_main_screen)
+                                   (u"Playground",self.show_thumbnail_mode)
                                    ))] + self.menu
         app.menu = m
     
@@ -315,7 +315,7 @@ class PWidgetMngr(object):
 
         self.redraw()
             
-    def show_main_screen(self):
+    def show_thumbnail_mode(self):
         app.menu = self.menu
         self.view_mode = self.VIEW_MODE_THUMBNAIL
         self.redraw()
