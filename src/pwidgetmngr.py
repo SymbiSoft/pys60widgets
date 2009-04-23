@@ -24,7 +24,7 @@ class PWidgetMngr(object):
     VIEW_MODE_FULL_SCREEN = 1
     VIEW_MODE_WIDGET = 2
 
-    DOUBLE_CLICK_TIME = 0.25    
+    DOUBLE_CLICK_TIME = 0.5    
     
     def __init__(self):
         app.screen = "full"
@@ -120,19 +120,19 @@ class PWidgetMngr(object):
 
     def add_window(self,win):
         self.window_list.append(win)
-        self.active_focus = len(self.window_list) - 1
-       
-    def redraw(self,rect=None):
-        if self.drawing_in_progress:
-            self.tmp_debug = (self.tmp_debug + 1) % 20
-            if self.tmp_debug == 0:
-                print "redraw in progress"
-            return
+        self.active_focus = 0 #len(self.window_list) - 1
 
-        if self.effect_in_progress:
-            print "effect in progress"
-            return
-
+    def redraw_widget(self,win):
+        """ Redraw widget if possible. Playground/effect has priority over this call.
+            However, when in widget mode, playground and effects are disabled and all
+            redraws from widget are performed.
+            
+            TODO: some cache here ?
+        """
+        if (not self.drawing_in_progress) and (not self.effect_in_progress):
+            self.redraw()
+            
+    def redraw(self,rect=None): 
         self.drawing_in_progress = True
 
         if (self.view_mode == self.VIEW_MODE_FULL_SCREEN or \
@@ -230,13 +230,12 @@ class PWidgetMngr(object):
                     self.order = range(self.active_focus-5,self.active_focus + 1)
                 else:
                     self.order = range(self.active_focus,self.active_focus + 6)
-        elif self.view_mode == self.VIEW_MODE_FULL_SCREEN or \
-             self.view_mode == self.VIEW_MODE_THUMBNAIL:
+        elif self.view_mode == self.VIEW_MODE_FULL_SCREEN:
             # effects in full screen
             self.effect_in_progress = True
             self.screen.blit(curr)
-            e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
-            xstep = 8
+            #e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
+            xstep = 16
             for x in range(xstep,self.size[0],xstep):
                 self.screen.blit(next,target=(self.size[0]-x,0),source=((0,0),(x,self.size[1])))
                 self.canvas.blit(self.screen)
@@ -246,12 +245,12 @@ class PWidgetMngr(object):
             
         self.redraw()
 
-    def show_next_widget(self):
+    def show_prev_widget(self):
 
         curr = self.window_list[self.active_focus].get_canvas()
         self.active_focus = (self.active_focus - 1) % len(self.window_list)
         next = self.window_list[self.active_focus].get_canvas()
-
+        
         if self.view_mode == self.VIEW_MODE_THUMBNAIL:
             # next widget in thumbnail view
             if self.active_focus not in self.order:
@@ -259,28 +258,28 @@ class PWidgetMngr(object):
                     self.order = range(self.active_focus-5,self.active_focus + 1)
                 else:
                     self.order = range(self.active_focus,self.active_focus + 6)
-        elif self.view_mode == self.VIEW_MODE_FULL_SCREEN or \
-             self.view_mode == self.VIEW_MODE_THUMBNAIL:
+        elif self.view_mode == self.VIEW_MODE_FULL_SCREEN:
+
             # effects in full screen
             self.effect_in_progress = True
             self.screen.blit(curr)
-            e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
-            xstep = 8
+            #e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
+            xstep = 16
             for x in range(self.size[0]-xstep,-xstep,-xstep):
                 self.screen.blit(next,target=(0,0),source=((x,0),(self.size[0]-x,self.size[1])))
                 self.canvas.blit(self.screen)
             self.effect_in_progress = False
         else:
-            print "Error in show_next_widget: unexpected bind"
+            print "Error in show_prev_widget: unexpected bind"
             
         self.redraw()        
 
     def set_menu(self,menu):
         """ Merge window menu with PWidgetMngr menu
         """
-        m = menu + [(u"PyWidgets",((u"Next",self.show_next_widget),
-                                   (u"Prev",self.show_prev_widget),
-                                   (u"Playground",self.show_thumbnail_mode)
+        m = menu + [(u"PyWidgets",((u"Playground",self.show_thumbnail_mode),
+                                   (u"Next",self.show_next_widget),
+                                   (u"Prev",self.show_prev_widget)                                   
                                    ))] + self.menu
         app.menu = m
     
@@ -294,7 +293,7 @@ class PWidgetMngr(object):
         
         double_click = False
         tm = time.time()
-        if tm - self.select_double_click < self.DOUBLE_CLICK_TIME:
+        if (tm - self.select_double_click) < self.DOUBLE_CLICK_TIME:
             double_click = True
         self.select_double_click = tm
             
