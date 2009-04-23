@@ -1,11 +1,20 @@
 from pwidget import *
 from random import randint
+import e32
 
 class PWDemo(PWidget):
 
     def __init__(self,mngr):    
         self.name = u"Demo"
         PWidget.__init__(self,mngr,self.name)
+        self.timer = e32.Ao_timer()
+        self.timer.after(4,self.sampler)
+        self.sampling = True
+
+    def sampler(self):
+        if self.sampling:
+            self.redraw()
+            self.timer.after(4,self.sampler)
     
     def get_name(self):
         return self.name
