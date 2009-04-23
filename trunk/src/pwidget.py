@@ -39,11 +39,15 @@ class PWidget(object):
         raise NotImplementedError
 
     def get_canvas(self):
-        self.update_canvas()
+        """ Return the current canvas image to manager
+        """
         return self.canvas
 
     def redraw(self):
-        self.mngr.redraw(self)
+        """ Request an redraw from pwidget manager. update_canvas is called before.
+        """
+        self.update_canvas()
+        self.mngr.redraw_widget(self)
 
     def got_focus(self):
         self.mngr.set_menu(self.menu)
