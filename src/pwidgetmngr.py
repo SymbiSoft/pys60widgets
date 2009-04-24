@@ -233,12 +233,14 @@ class PWidgetMngr(object):
         elif self.view_mode == self.VIEW_MODE_FULL_SCREEN:
             # effects in full screen
             self.effect_in_progress = True
-            self.screen.blit(curr)
+            #self.screen.blit(curr)
             #e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
-            xstep = 16
+            xstep = 8
             for x in range(xstep,self.size[0],xstep):
+                self.screen.blit(curr,target=(0,0),source=((x,0),(self.size[0]-x,self.size[1])))
                 self.screen.blit(next,target=(self.size[0]-x,0),source=((0,0),(x,self.size[1])))
                 self.canvas.blit(self.screen)
+                #e32.ao_sleep(1)
             self.effect_in_progress = False
         else:
             print "Error in show_next_widget: unexpected bind"
@@ -262,12 +264,14 @@ class PWidgetMngr(object):
 
             # effects in full screen
             self.effect_in_progress = True
-            self.screen.blit(curr)
+            #self.screen.blit(curr)
             #e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
-            xstep = 16
-            for x in range(self.size[0]-xstep,-xstep,-xstep):
+            xstep = 8
+            for x in range(self.size[0]-xstep,0,-xstep):
+                self.screen.blit(curr,target=(self.size[0]-x,0),source=((0,0),(x,self.size[1])))
                 self.screen.blit(next,target=(0,0),source=((x,0),(self.size[0]-x,self.size[1])))
                 self.canvas.blit(self.screen)
+                #e32.ao_sleep(1)
             self.effect_in_progress = False
         else:
             print "Error in show_prev_widget: unexpected bind"
