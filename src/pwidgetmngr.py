@@ -129,9 +129,11 @@ class PWidgetMngr(object):
             
             TODO: some cache here ?
         """
-        if (not self.drawing_in_progress) and (not self.effect_in_progress):
-            self.redraw()
-            
+        self.redraw()
+
+    def manager_is_busy(self):
+        return (self.drawing_in_progress or self.effect_in_progress)
+
     def redraw(self,rect=None): 
         self.drawing_in_progress = True
 
@@ -233,12 +235,16 @@ class PWidgetMngr(object):
         elif self.view_mode == self.VIEW_MODE_FULL_SCREEN:
             # effects in full screen
             self.effect_in_progress = True
-            #self.screen.blit(curr)
+            self.screen.blit(curr)
             #e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
             xstep = 8
             for x in range(xstep,self.size[0],xstep):
-                self.screen.blit(curr,target=(0,0),source=((x,0),(self.size[0]-x,self.size[1])))
-                self.screen.blit(next,target=(self.size[0]-x,0),source=((0,0),(x,self.size[1])))
+                self.screen.blit(curr,
+                                 target=(0,0),
+                                 source=((x,0),self.size))
+                self.screen.blit(next,
+                                 target=(self.size[0]-x,0),
+                                 source=((0,0),self.size))
                 self.canvas.blit(self.screen)
                 #e32.ao_sleep(1)
             self.effect_in_progress = False
@@ -264,12 +270,12 @@ class PWidgetMngr(object):
 
             # effects in full screen
             self.effect_in_progress = True
-            #self.screen.blit(curr)
+            self.screen.blit(curr)
             #e32.ao_sleep(0.1) # do not ask me why this thing does not work without this line
             xstep = 8
             for x in range(self.size[0]-xstep,0,-xstep):
-                self.screen.blit(curr,target=(self.size[0]-x,0),source=((0,0),(x,self.size[1])))
-                self.screen.blit(next,target=(0,0),source=((x,0),(self.size[0]-x,self.size[1])))
+                self.screen.blit(curr,target=(self.size[0]-x,0),source=((0,0),self.size))
+                self.screen.blit(next,target=(0,0),source=((x,0),self.size))
                 self.canvas.blit(self.screen)
                 #e32.ao_sleep(1)
             self.effect_in_progress = False
