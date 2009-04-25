@@ -46,8 +46,10 @@ class PWidget(object):
     def redraw(self):
         """ Request an redraw from pwidget manager. update_canvas is called before.
         """
-        self.update_canvas()
-        self.mngr.redraw_widget(self)
+        if not self.mngr.manager_is_busy():
+            self.update_canvas()
+        if not self.mngr.manager_is_busy():
+            self.mngr.redraw_widget(self)
 
     def got_focus(self):
         self.mngr.set_menu(self.menu)
