@@ -1,7 +1,7 @@
 from pwcolor import *
 from graphics import *
-from PWFill import *
 from e32 import *
+from pwfill import *
 import _graphics
 
 __all__ = ["PWCanvas"]
@@ -12,14 +12,19 @@ class PWCanvas(Image):
         f = fill
         op = int(opacity * 255)
         #create alpha mask if needed
-        if isinstance(f, PWFill) or (op < 255):
+        if isinstance(fill, PWFill) or (op < 255):
             size = (pos[2]-pos[0], pos[3]-pos[1])
             alpha_pos = (0,0,size[0],size[1])
             alpha = PWCanvas.new(size,'L')
             alpha.clear(0)
             self._round_rectangle(alpha, alpha_pos, r, fill=(op,op,op))
 
-        if isinstance(f, tuple): 
+        if isinstance(fill, PWFill):
+            #create the gradient and apply the mask
+            gradient = PWCanvas.new(size)
+            fill.gradient_fill(gradient)
+            self.blit(gradient, target=(pos[0],pos[1]), mask=alpha)
+        elif isinstance(f, tuple): 
             #solid color
             if op == 255: 
                 #simple round_rectangle solid colored
@@ -29,11 +34,6 @@ class PWCanvas(Image):
                 rrect = PWCanvas.new(size)
                 self._round_rectangle(rrect, alpha_pos, r, fill=f)
                 self.blit(rrect, target=(pos[0],pos[1]), mask=alpha)
-        elif isinstance(f, PWFill):
-            #create the gradient and apply the mask
-            gradient = PWCanvas.new(size)
-            fill.gradient_fill(gradient)
-            self.blit(gradient, target=(pos[0],pos[1]), mask=alpha)
 
     def _round_rectangle(self, canvas, pos, r=5, outline=None, fill=None):
         """Draws a rounded rectangle on a PWCanvas using the following parameters:
