@@ -8,6 +8,8 @@ from graphics import *
 from pwcanvas import *
 from pwfill import *
 
+__all__ = ["PWClock"]
+
 minute_degree = math.pi / 30.0 #6 degrees
 hour_degree = 5 * minute_degree
 
@@ -32,19 +34,36 @@ def rotate(v, t):
     m = [[c,-s],[s,c]]
     return matrix_multiply(m, v)
 
-class PWClock(object):
-    def __init__(self, owner):
+class PWClock(PWidget):
+    def __init__(self, mngr, **attrs):
         self.name = u"Clock"
+        self.menu = []
+        PWidget.__init__(self,mngr,self.name,menu=menu)
         self.hands = [0,0,0]
-        self.analog_bg = Image.open('e:\\python\\lib\\clock.png')
-        mask = Image.open('e:\\python\\lib\\clock-mask.png')
-        self.mask = Image.new(self.analog_bg.size, 'L')
-        self.canvas = PWCanvas.new(self.analog_bg.size)
-        self.bg = Image.new(owner.size)
-        self.bg.blit(owner)
-        self.mask.blit(mask)
-        self.update_time()
-        self.owner = owner
+        self.analog_bg = Image.open(u'e:\\python\\lib\\clock.png')
+        mask = Image.open(u'e:\\python\\lib\\clock-mask.png')
+        self.mask = Image.new(mask.size, 'L') #convert mask to 8-bits grayscale
+        self.mask.blit(mask) #convert mask to 8-bits grayscale
+        self.bg = PWCanvas.new(self.size)
+        self.bg.clear()
+        c1 = PWColor(GREEN)
+        c2 = PWColor(YELLOW)
+        self.bg.round_rectangle((0,0, self.size[0],self.size[1]), 
+                                r=0, 
+                                outline=None, 
+                                fill=PWFill(c1, c2, mode=VERTICAL_GRADIENT))
+        #self.timer = e32.Ao_timer()
+
+    def get_name(self):
+        return self.name
+        
+    def run(self):
+        self.add_window(self)
+        self.update_clock()
+    
+    def update_clock(self):
+        self.redraw()
+        #self.timer.after(0.1, self.update_clock)
     
     def update_time(self):
         now = time.localtime()
@@ -52,12 +71,6 @@ class PWClock(object):
         self.hour   = now[3]
         self.minute = now[4]
         self.second = now[5]
-        
-    def redraw(self):
-        self.update_time()
-        self.draw_background()
-        self.hands_vectors()
-        self.owner.blit(self.canvas)
     
     def draw_background(self):
         self.canvas.blit(self.bg)
@@ -71,4 +84,8 @@ class PWClock(object):
         self.canvas.line((113,113,113+self.hands[0][0],113+self.hands[0][1]), width=4, outline=(255,255,255))
         self.canvas.line((113,113,113+self.hands[1][0],113+self.hands[1][1]), width=4, outline=(255,255,255))
         self.canvas.line((113,113,113+self.hands[2][0],113+self.hands[2][1]), width=2, outline=(255,0,0))
-        
+
+    def update_canvas(self):
+        self.update_time()
+        self.draw_background()
+        self.hands_vectors()

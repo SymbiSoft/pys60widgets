@@ -30,10 +30,11 @@ class PWTextViewer(PWidget):
     def __init__(self, mngr, **attrs):
         self.name = u"TextViewer"
         menu = [(u"Font", self.change_font), (u"Colors", self.change_color)]
-        PWidget.__init__(self,mngr,self.name)
+        PWidget.__init__(self,mngr,self.name,menu=menu)
         self.check_default_values(attrs)
         self.cursor = [0,0]
         self.set_binds(True)
+        self.redraw()
 
     def check_default_values(self, attrs):
         """ Given some user attributes, define all attributes
@@ -42,8 +43,8 @@ class PWTextViewer(PWidget):
         
         self.def_attrs = { 'top':0,
                            'left':0,
-                           'width':240,
-                           'height':320,
+                           'width':self.mngr.size[0],
+                           'height':self.mngr.size[1],
                            'bg_color':PWColor([0,49,124,255]),
                            'fg_color':PWColor([255,255,255,255]),
                            'scrollbar_color':PWColor([128,128,128,255]),
@@ -99,7 +100,7 @@ class PWTextViewer(PWidget):
                 self.cursor[1] = 0
             elif self.cursor[1] >= len(self.lines[self.cursor[0]]):
                 self.cursor[1] = len(self.lines[self.cursor[0]]) - 1
-        self.redraw_textview()
+        self.redraw()
 
     def down_key(self):
         if self.cursor[0] < len(self.lines) - 1:
@@ -108,7 +109,7 @@ class PWTextViewer(PWidget):
                 self.cursor[1] = 0
             elif self.cursor[1] >= len(self.lines[self.cursor[0]]):
                 self.cursor[1] = len(self.lines[self.cursor[0]]) - 1
-        self.redraw_textview()
+        self.redraw()
 
     def left_key(self):
         if self.cursor[1] > 0:
@@ -119,7 +120,7 @@ class PWTextViewer(PWidget):
                 self.cursor[1] = 0
             else:
                 self.cursor[1] = len(self.lines[self.cursor[0]]) - 1
-        self.redraw_textview()
+        self.redraw()
 
     def right_key(self):
         if self.cursor[1] < len(self.lines[self.cursor[0]]) - 1:
@@ -127,7 +128,7 @@ class PWTextViewer(PWidget):
         elif self.cursor[0] < len(self.lines) - 1:
             self.cursor[0] += 1
             self.cursor[1] = 0
-        self.redraw_textview()
+        self.redraw()
 
     def get_name(self):
         return self.name
@@ -253,7 +254,7 @@ class PWTextViewer(PWidget):
             if s is not None:
                 self.attrs['font_size'] = int(sizes[s])
                 self.text_wrap()
-            self.redraw_textview()
+            self.redraw()
 
     def change_color(self):
         scolors = [u"White",u"Black",u"Red",u"Green",u"Blue",u"Yellow",u"Magenta",u"Cyan",u"Gray"]
@@ -264,15 +265,10 @@ class PWTextViewer(PWidget):
         c = popup_menu(scolors,u"Foreground:")
         if c is not None:
             self.attrs['fg_color'] = PWColor(colors[c])
-        self.redraw_textview()
+        self.redraw()
     
-    def redraw_textview(self):
+    def update_canvas(self):
         self.draw_background()
         self.draw_text()
         self.draw_cursor()
         self.draw_scrollbar()
-        self.redraw()
-
-    
-    def update_canvas(self):
-        self.redraw_textview()

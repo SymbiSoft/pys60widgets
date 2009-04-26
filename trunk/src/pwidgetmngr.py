@@ -11,7 +11,6 @@ from pwidget import PWidget
 import time
 from pwlayout import PWLayout3x2
 
-
 __all__ = [ "PWM" ]
 
 class PWidgetMngr(object):
@@ -107,7 +106,7 @@ class PWidgetMngr(object):
         
         [ self.try_import(f[:f.rfind(".py")]) for f in files if f.endswith(".py") ]
 
-        self.widgets = {}        
+        self.widgets = {}
         for widget in PWidget.__subclasses__():
             if widget not in self.widgets:
                 # instanciate and add the widget to the interface

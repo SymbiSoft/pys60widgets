@@ -18,7 +18,6 @@ class Teste(object):
         app.exit_handler = self.close_app
         self.timer = e32.Ao_timer()
         
-        
     def redraw(self):
         self.clock.redraw()
         self.canvas.blit(self.image)
