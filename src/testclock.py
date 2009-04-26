@@ -16,7 +16,8 @@ class Teste(object):
         self.clock = PWClock(self.image)
         self.canvas = Canvas(redraw_callback = self.handle_redraw)
         app.exit_handler = self.close_app
-        Teste.__lock = e32.Ao_lock()
+        self.timer = e32.Ao_timer()
+        
         
     def redraw(self):
         self.clock.redraw()
@@ -31,7 +32,9 @@ class Teste(object):
     def run(self):
         self.redraw()
         app.body = self.canvas
-        Teste.__lock.wait()
-
+        while 1 == 1:
+            self.redraw()
+            self.timer.after(0.1)
+        
 t = Teste()
 t.run()

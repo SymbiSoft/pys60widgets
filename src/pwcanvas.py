@@ -8,7 +8,6 @@ import sysinfo
 __all__ = ["PWCanvas"]
 
 class PWCanvas(Image):
-
     def round_rectangle(self, pos, r=5, outline=None, fill=None, opacity=1):
         o = outline
         f = fill
