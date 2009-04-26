@@ -1,4 +1,6 @@
 import graphics
+from pwcanvas import *
+from pwfill import *
 
 __all__ = [ "PWidget" ]
 
@@ -18,7 +20,7 @@ class PWidget(object):
         if self.size != size:
             self.size = size
             # Is explicit del for previous canvas necessary ?
-            self.canvas = graphics.Image.new(self.size)
+            self.canvas = PWCanvas.new(self.size)
         
     def get_name(self):
         """ Returns the plugin name. Must be a unicode string

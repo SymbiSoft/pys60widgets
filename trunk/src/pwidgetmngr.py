@@ -3,12 +3,14 @@ import sys
 import sysinfo
 import e32
 import key_codes
+from pwcanvas import *
 from pwidgetcfg import *
 from appuifw import *
 import graphics
 from pwidget import PWidget
 import time
 from pwlayout import PWLayout3x2
+
 
 __all__ = [ "PWM" ]
 
@@ -43,7 +45,7 @@ class PWidgetMngr(object):
                              event_callback = self.event,
                              resize_callback = self.resize)
         self.size = sysinfo.display_pixels()
-        self.double_buffer = graphics.Image.new(self.size)
+        self.double_buffer = PWCanvas.new(self.size)
         app.body = self.canvas
         self.menu = [(u"Exit",self.close_app) ]
         app.menu = self.menu

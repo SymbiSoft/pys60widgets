@@ -4,6 +4,8 @@ import key_codes
 from pwidget import *
 from pwcolor import *
 from graphics import *
+from pwcanvas import *
+from pwfill import *
 from appuifw import available_fonts, popup_menu
 
 __all__ = ["PWTextViewer"]
@@ -28,13 +30,7 @@ class PWTextViewer(PWidget):
     def __init__(self, mngr, **attrs):
         self.name = u"TextViewer"
         menu = [(u"Font", self.change_font), (u"Colors", self.change_color)]
-        PWidget.__init__(self,mngr,self.name, menu)
-        #test gradient colors
-        c1 = PWColor([0,99,249,255])
-        c2 = PWColor([0,49,124,255])
-        self.gradient = Image.new((self.canvas.size[0],self.canvas.size[1]))
-        c1.gradient(self.gradient, c2, (1,0))
-        #end test gradient
+        PWidget.__init__(self,mngr,self.name)
         self.check_default_values(attrs)
         self.cursor = [0,0]
         self.set_binds(True)
@@ -192,8 +188,7 @@ class PWTextViewer(PWidget):
                                 fill=gc.get_color())
     
     def draw_background(self):
-        #self.canvas.clear(self.attrs['bg_color'].get_color())
-        self.canvas.blit(self.gradient)
+        self.canvas.clear(self.attrs['bg_color'].get_color())
 
     def draw_text(self):
         i = 1;

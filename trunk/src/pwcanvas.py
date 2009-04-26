@@ -3,10 +3,12 @@ from graphics import *
 from e32 import *
 from pwfill import *
 import _graphics
+import sysinfo
 
 __all__ = ["PWCanvas"]
 
 class PWCanvas(Image):
+
     def round_rectangle(self, pos, r=5, outline=None, fill=None, opacity=1):
         o = outline
         f = fill
@@ -24,7 +26,7 @@ class PWCanvas(Image):
             gradient = PWCanvas.new(size)
             fill.gradient_fill(gradient)
             self.blit(gradient, target=(pos[0],pos[1]), mask=alpha)
-        elif isinstance(f, tuple): 
+        else: 
             #solid color
             if op == 255: 
                 #simple round_rectangle solid colored
@@ -69,7 +71,7 @@ class PWCanvas(Image):
             #if r == 0 than the round_rectangle is just a rectangle. Let's make things simple
             canvas.rectangle(pos, outline=None, fill=f)
 
-    def new(size, mode='RGB16'):
+    def new(size, mode='RGB'):
         """ rewrite the static "new" method to
         return a PWCanvas instead of an Image"""
         if not Image._modemap.has_key(mode):
