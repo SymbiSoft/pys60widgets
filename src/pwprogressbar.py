@@ -1,13 +1,14 @@
 from pwcolor import *
+from pwcanvas import *
 from graphics import *
 from appuifw import *
 from e32 import *
 
 class PWProgressBar(object):
     def __init__(self, other_canvas, start=0, end=100, color=[0,0,77,255]):
-        self.canvas_copy = Image.new(other_canvas.size)
+        self.canvas_copy = PWCanvas.new(other_canvas.size)
         self.canvas_copy.blit(other_canvas)
-        self.return_canvas = Image.new(self.canvas_copy.size)
+        self.return_canvas = PWCanvas.new(self.canvas_copy.size)
         self.return_canvas.blit(other_canvas)
         self.start = start
         self.end = end
@@ -42,7 +43,7 @@ class PWProgressBar(object):
         box_h = 50
         box_l = int(self.canvas_copy.size[0] - box_w) / 2
         box_t = self.canvas_copy.size[1] - box_h - 5
-        self.canvas_copy.rectangle((box_l, box_t, box_l + box_w, box_t + box_h), outline=(0,0,0), fill=(255,255,255))
+        self.canvas_copy.round_rectangle((box_l, box_t, box_l + box_w, box_t + box_h), r = 5, outline=(0,0,0), fill=(255,255,255), opacity=1)
         #draw external progressbar
         box_w = box_w - 10
         box_h = 18
