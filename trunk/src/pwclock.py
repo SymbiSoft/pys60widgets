@@ -48,10 +48,11 @@ class PWClock(object):
     
     def update_time(self):
         now = time.localtime()
+        self.day    = str(now[2])
         self.hour   = now[3]
         self.minute = now[4]
         self.second = now[5]
-
+        
     def redraw(self):
         self.update_time()
         self.draw_background()
@@ -61,6 +62,7 @@ class PWClock(object):
     def draw_background(self):
         self.canvas.blit(self.bg)
         self.canvas.blit(self.analog_bg, mask=self.mask)
+        self.canvas.text((170,120), u"" + self.day, fill = 0, font=('dense', 14, FONT_BOLD | FONT_ANTIALIAS))
     
     def hands_vectors(self):
         self.hands[0] = rotate([0, -60], self.hour*hour_degree+(self.minute*hour_degree/60.0))
