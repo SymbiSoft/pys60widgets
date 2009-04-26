@@ -63,8 +63,8 @@ class PWClock(object):
         self.canvas.blit(self.analog_bg, mask=self.mask)
     
     def hands_vectors(self):
-        self.hands[0] = rotate([0, -60], self.hour*hour_degree+(self.minute*minute_degree/60.0))
-        self.hands[1] = rotate([0, -80], self.minute*minute_degree)
+        self.hands[0] = rotate([0, -60], self.hour*hour_degree+(self.minute*hour_degree/60.0))
+        self.hands[1] = rotate([0, -80], self.minute*minute_degree+(self.second*minute_degree/60.0))
         self.hands[2] = rotate([0, -75], self.second*minute_degree)
         self.canvas.line((113,113,113+self.hands[0][0],113+self.hands[0][1]), width=4, outline=(255,255,255))
         self.canvas.line((113,113,113+self.hands[1][0],113+self.hands[1][1]), width=4, outline=(255,255,255))
