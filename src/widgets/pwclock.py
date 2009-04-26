@@ -38,7 +38,7 @@ class PWClock(PWidget):
     def __init__(self, mngr, **attrs):
         self.name = u"Clock"
         self.menu = []
-        PWidget.__init__(self,mngr,self.name,menu=menu)
+        PWidget.__init__(self,mngr,self.name)
         self.hands = [0,0,0]
         self.analog_bg = Image.open(u'e:\\python\\lib\\clock.png')
         mask = Image.open(u'e:\\python\\lib\\clock-mask.png')
@@ -52,18 +52,19 @@ class PWClock(PWidget):
                                 r=0, 
                                 outline=None, 
                                 fill=PWFill(c1, c2, mode=VERTICAL_GRADIENT))
-        #self.timer = e32.Ao_timer()
+        self.timer = e32.Ao_timer()
+        self.timer.after(5,self.update_clock)        
 
     def get_name(self):
         return self.name
         
     def run(self):
         self.add_window(self)
-        self.update_clock()
+        #self.update_clock()
     
     def update_clock(self):
         self.redraw()
-        #self.timer.after(0.1, self.update_clock)
+        self.timer.after(0.1, self.update_clock)
     
     def update_time(self):
         now = time.localtime()
