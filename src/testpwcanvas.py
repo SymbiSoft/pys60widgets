@@ -1,6 +1,7 @@
 from pwcolor import *
 from appuifw import *
-from pwcanvas import PWCanvas
+from pwcanvas import *
+from pwfill import *
 from random import randint
 from pwprogressbar import *
 import e32
@@ -13,7 +14,7 @@ class Teste(object):
         self.c1 = PWColor(GREEN)
         self.c2 = PWColor(YELLOW)
         self.c1.gradient(self.image, self.c2,(1,0))
-        self.image.round_rectangle((10,10, 100, 200), r=10, outline=(0,0,255), fill=(255,255,255))
+        self.image.round_rectangle((10,10, 100, 200), r=10, outline=(0,0,255), fill=PWFill(PWColor(BLUE), PWColor(RED), mode=VERTICAL_GRADIENT), opacity=1)
         self.image.round_rectangle((110,10, 210, 200), r=10, outline=None, fill=(0,0,255), opacity=0.2)
         self.canvas = Canvas(redraw_callback = self.handle_redraw)
         app.menu = [(u"Progressbar", self.progress),(u"Exit", self.close_app)]

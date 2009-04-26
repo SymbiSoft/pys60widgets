@@ -19,7 +19,7 @@ class PWFill(object):
     def gradient_fill(self, img):
         c1 = self.start_color.get_color()
         c2 = self.end_color.get_color()
-        if orientation[0] == HORIZONTAL:
+        if self.mode == HORIZONTAL_GRADIENT:
             d = img.size[0]
             for i in range(d):
                 c = map(lambda a,b: (a*(d-i) + b*i)/d, c1, c2)
@@ -29,3 +29,8 @@ class PWFill(object):
             for i in range(d):
                 c = map(lambda a,b: (a*(d-i) + b*i)/d, c1, c2)
                 img.line(((0,i),(d,i)),outline=tuple(c))
+
+    def getclass(self):
+        return PWFill
+
+    __class__ = property(getclass)
