@@ -1,3 +1,0 @@
-* Move common canvas routines to pwutil.py, like canvas_split_text
-* Should basic components like textview and listbox inherit from PWidget ?
-* size and anti-aliases for listbox

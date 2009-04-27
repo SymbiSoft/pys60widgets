@@ -11,30 +11,27 @@ class PWTrend(PWidget):
     BLUE = (51,204,255)
     YELLOW = (255,255,102)
 
-    def __init__(self,pw_mngr,**attrs):
-        self.name = u"Trend"
+    def __init__(self,mngr,**attrs):
+        info = {'name':u"Trend",
+                'description':u"Trend demo Python for S60 widgets",
+                'author':u"Marcelo Barros",
+                'version':u"0.1"}
         self.check_default_values(attrs)
-        menu = [(u"Start",self.start),
-                (u"Stop",self.stop)]
-        PWidget.__init__(self,pw_mngr,self.name,menu)
+        menu = [(u"Start",self.start_trend),
+                (u"Stop",self.stop_trend)]
+        PWidget.__init__(self,mngr,info,menu)
         self.samples = []
         self.sampling = False
         self.timer = e32.Ao_timer()
         self.canvas.clear( self.BLACK )
         self.draw_grid()
-
-    def get_name(self):
-        return self.name
-
-    def run(self):
-        self.add_window(self)
-    
-    def start(self):
+      
+    def start_trend(self):
         if not self.sampling:
             self.timer.after(self.attrs['sampling_time'],self.sampler)
             self.sampling = True
 
-    def stop(self):
+    def stop_trend(self):
         if self.sampling:
             self.sampling = False
             
@@ -97,8 +94,9 @@ class PWTrend(PWidget):
             coord = ( lines[p][0], lines[p][1], lines[p+1][0], lines[p+1][1] )
             self.canvas.line( coord, outline = color_name )
         
-    def update_canvas(self):
+    def redraw(self):
         self.canvas.clear( self.BLACK )
         self.draw_grid()
         self.draw_points()
+        PWidget.redraw(self)
 
