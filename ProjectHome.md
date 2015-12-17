@@ -1,0 +1,1 @@
+Widgets for PyS60
